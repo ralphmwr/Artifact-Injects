@@ -1,5 +1,6 @@
 $frmMain = New-Object -TypeName System.Windows.Forms.Form
 [System.Windows.Forms.GroupBox]$gbxAutomation = $null
+[System.Windows.Forms.Button]$btnAutoRemove = $null
 [System.Windows.Forms.Button]$btnValidate = $null
 [System.Windows.Forms.Button]$btnAutoRun = $null
 [System.Windows.Forms.Label]$lblAutoValidation = $null
@@ -10,6 +11,7 @@ $frmMain = New-Object -TypeName System.Windows.Forms.Form
 [System.Windows.Forms.Button]$btnLoadCredentials = $null
 [System.Windows.Forms.Label]$lblCredentials = $null
 [System.Windows.Forms.GroupBox]$gbxAdHoc = $null
+[System.Windows.Forms.Button]$btnAdHocRemove = $null
 [System.Windows.Forms.Label]$lbltxtAdHocStatus = $null
 [System.Windows.Forms.TextBox]$txtAdHocStatus = $null
 [System.Windows.Forms.Button]$btnAdHocValidate = $null
@@ -63,6 +65,8 @@ $lbltxtAdHoc1 = (New-Object -TypeName System.Windows.Forms.Label)
 $txtAdHoc1 = (New-Object -TypeName System.Windows.Forms.TextBox)
 $lblAction = (New-Object -TypeName System.Windows.Forms.Label)
 $cbxAction = (New-Object -TypeName System.Windows.Forms.ComboBox)
+$btnAutoRemove = (New-Object -TypeName System.Windows.Forms.Button)
+$btnAdHocRemove = (New-Object -TypeName System.Windows.Forms.Button)
 $gbxAutomation.SuspendLayout()
 ([System.ComponentModel.ISupportInitialize]$dgvAutomation).BeginInit()
 $gbxAdHoc.SuspendLayout()
@@ -70,6 +74,7 @@ $frmMain.SuspendLayout()
 #
 #gbxAutomation
 #
+$gbxAutomation.Controls.Add($btnAutoRemove)
 $gbxAutomation.Controls.Add($btnValidate)
 $gbxAutomation.Controls.Add($btnAutoRun)
 $gbxAutomation.Controls.Add($lblAutoValidation)
@@ -147,6 +152,7 @@ $dgvAutomation.Name = [System.String]'dgvAutomation'
 $dgvAutomation.ReadOnly = $true
 $dgvAutomation.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]922,[System.Int32]201))
 $dgvAutomation.TabIndex = [System.Int32]2
+$dgvAutomation.Visible = $false
 #
 #lblFileLoaded
 #
@@ -184,6 +190,7 @@ $lblCredentials.UseCompatibleTextRendering = $true
 #
 #gbxAdHoc
 #
+$gbxAdHoc.Controls.Add($btnAdHocRemove)
 $gbxAdHoc.Controls.Add($lbltxtAdHocStatus)
 $gbxAdHoc.Controls.Add($txtAdHocStatus)
 $gbxAdHoc.Controls.Add($btnAdHocValidate)
@@ -214,7 +221,7 @@ $gbxAdHoc.UseCompatibleTextRendering = $true
 #
 #lbltxtAdHocStatus
 #
-$lbltxtAdHocStatus.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]380,[System.Int32]121))
+$lbltxtAdHocStatus.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]364,[System.Int32]121))
 $lbltxtAdHocStatus.Name = [System.String]'lbltxtAdHocStatus'
 $lbltxtAdHocStatus.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]196,[System.Int32]23))
 $lbltxtAdHocStatus.TabIndex = [System.Int32]18
@@ -224,12 +231,13 @@ $lbltxtAdHocStatus.UseCompatibleTextRendering = $true
 #
 #txtAdHocStatus
 #
-$txtAdHocStatus.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]380,[System.Int32]147))
+$txtAdHocStatus.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]364,[System.Int32]147))
 $txtAdHocStatus.Multiline = $true
 $txtAdHocStatus.Name = [System.String]'txtAdHocStatus'
 $txtAdHocStatus.ReadOnly = $true
-$txtAdHocStatus.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]548,[System.Int32]118))
+$txtAdHocStatus.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]564,[System.Int32]118))
 $txtAdHocStatus.TabIndex = [System.Int32]17
+$txtAdHocStatus.Visible = $false
 #
 #btnAdHocValidate
 #
@@ -406,6 +414,26 @@ $cbxAction.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([Sys
 $cbxAction.TabIndex = [System.Int32]0
 $cbxAction.add_SelectedIndexChanged($UpdateAdHocForm)
 #
+#btnAutoRemove
+#
+$btnAutoRemove.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]153,[System.Int32]17))
+$btnAutoRemove.Name = [System.String]'btnAutoRemove'
+$btnAutoRemove.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]128,[System.Int32]23))
+$btnAutoRemove.TabIndex = [System.Int32]9
+$btnAutoRemove.Text = [System.String]'Remove Artifacts'
+$btnAutoRemove.UseCompatibleTextRendering = $true
+$btnAutoRemove.UseVisualStyleBackColor = $true
+#
+#btnAdHocRemove
+#
+$btnAdHocRemove.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]230,[System.Int32]205))
+$btnAdHocRemove.Name = [System.String]'btnAdHocRemove'
+$btnAdHocRemove.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]128,[System.Int32]23))
+$btnAdHocRemove.TabIndex = [System.Int32]19
+$btnAdHocRemove.Text = [System.String]'Remove Artifacts'
+$btnAdHocRemove.UseCompatibleTextRendering = $true
+$btnAdHocRemove.UseVisualStyleBackColor = $true
+#
 #frmMain
 #
 $frmMain.ClientSize = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]958,[System.Int32]654))
@@ -421,6 +449,7 @@ $gbxAdHoc.PerformLayout()
 $frmMain.ResumeLayout($false)
 Add-Member -InputObject $frmMain -Name base -Value $base -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name gbxAutomation -Value $gbxAutomation -MemberType NoteProperty
+Add-Member -InputObject $frmMain -Name btnAutoRemove -Value $btnAutoRemove -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name btnValidate -Value $btnValidate -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name btnAutoRun -Value $btnAutoRun -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name lblAutoValidation -Value $lblAutoValidation -MemberType NoteProperty
@@ -431,6 +460,7 @@ Add-Member -InputObject $frmMain -Name lblFileLoaded -Value $lblFileLoaded -Memb
 Add-Member -InputObject $frmMain -Name btnLoadCredentials -Value $btnLoadCredentials -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name lblCredentials -Value $lblCredentials -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name gbxAdHoc -Value $gbxAdHoc -MemberType NoteProperty
+Add-Member -InputObject $frmMain -Name btnAdHocRemove -Value $btnAdHocRemove -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name lbltxtAdHocStatus -Value $lbltxtAdHocStatus -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name txtAdHocStatus -Value $txtAdHocStatus -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name btnAdHocValidate -Value $btnAdHocValidate -MemberType NoteProperty
