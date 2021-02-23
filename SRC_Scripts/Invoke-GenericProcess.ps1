@@ -1,42 +1,52 @@
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, Position = 0)]
+    [ValidateScript({
+        if (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$_'" -ErrorAction Ignore) {
+            $true
+        }
+        else {
+            Throw "$_ does not exist on $env:COMPUTERNAME"
+        }
+    })]
     [string]
     $Principal,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, Position = 1)]
     [ValidateScript({
-        $valid = @(Get-ChildItem -Path "Env:\").Name
-        if ($_ -in $valid) { 
-            $true 
-        } #if
-        else { 
-            Throw ("'$_' is not a valid run location. Valid locations are {0}" -f ($valid -join ", "))  
-        } #else
-    })] #ValidateScript
+        if((Get-Item "env:\$_" -ErrorAction Ignore).value | Test-Path -ErrorAction Ignore) {
+            $true
+        }
+        else {
+            Throw "$_ is an invalid run location on $env:COMPUTERNAME"
+        }
+    })]
     [string]
     $Runlocation,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, Position = 2)]
+    [ValidateScript({
+        #check for invalid characters, words or combination of characters
+        if(($_.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -eq -1) -and 
+           ($_ -notmatch "^COM[0-9]|CON|LPT[0-9]|NUL|PRN|AUX|\.{2,}|\s{2,}|.*\.$|.*\s$")) {
+            $true
+        }
+        else {
+            Throw "$_ is an invalid filename."
+        }
+    })]
     [string]
     $ProcessName
 ) #param block
 
+#store error action preface to return at the end of script
 Write-Verbose "Setting error action preference to 'Stop' for error handling purposes"
 $startpref = $ErrorActionPreference
 $ErrorActionPreference = "Stop"
 
-#nested in try, catch, finally for overall success determination
+#nested in try, catch, finally main for overall success determination
 try {
-    try {
-        Write-Verbose "Searching for $Principal SID on $env:COMPUTERNAME"
-        if (! ($userid = Get-CimInstance -ClassName Win32_Account -Filter "Name like '$Principal'" |
-            Select-Object -ExpandProperty SID)) { Throw }
-    } #try
-    catch {
-        $results = "Unable to find $Principal on $env:COMPUTERNAME"
-        Throw         
-    } #catch
+    $success = $true
     
     try {
         $copyargs = @{
@@ -45,20 +55,21 @@ try {
         } #copyargs hashtable
     
         if (Test-Path -Path $copyargs.Destination) {
-            Write-Verbose "$($copyargs.Destination) already exists."
+            Write-Verbose "$($copyargs.Destination) already exists on $env:COMPUTERNAME."
         } #if test-path
         else {
-            Write-Verbose "Copying cmd.exe to $($copyargs.Destination)"
+            Write-Verbose "Copying cmd.exe to $($copyargs.Destination) on $env:COMPUTERNAME"
             Copy-Item @copyargs -Force  
-        } #else     
+        } #else   
     } #try
     catch {
-        $results = "Unable to create executable program. Path: {0}, Destination: {1}" -f $copyargs.Path, $copyargs.Destination
-        Throw 
+        $message = "Unable to create executable program on $env:COMPUTERNAME. Path: {0}, Destination: {1}" -f $copyargs.Path, $copyargs.Destination
+        Throw $_
     } #catch
     
     try {
         Write-Verbose "Creating scheduled task arguments"
+        $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$Principal'").SID
         $taskargs = @{
             Action    = New-ScheduledTaskAction -Execute $copyargs.Destination
             Settings  = New-ScheduledTaskSettingsSet -Hidden
@@ -66,8 +77,8 @@ try {
         } #taskargs hashtable
     } #try
     catch {
-        $results = "Unable to create scheduled task arguments"
-        Throw
+        $message = "Unable to create scheduled task arguments on $env:COMPUTERNAME"
+        Throw $_
     } #catch
     
     Write-Verbose "Coming up with random task name that doesn't already exist."
@@ -76,50 +87,48 @@ try {
     } while (Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore)
     
     try {
-        Write-Verbose "Creating/Registering/Starting scheduled task $taskname"
+        Write-Verbose "Creating/Registering/Starting scheduled task $taskname on $env:COMPUTERNAME"
         New-ScheduledTask @taskargs | 
             Register-ScheduledTask -TaskName $taskname | 
                 Start-ScheduledTask
     } #try
     catch {
-        $results = "Unable to start process from scheduled task - $taskname on $env:COMPUTERNAME"
-        Unregister-ScheduledTask -TaskName $taskname -Confirm:$false
-        Throw
+        $message = "Unable to start process from scheduled task - $taskname on $env:COMPUTERNAME"
+        Throw $_
     } #catch
 
     try {
-        Write-Verbose "Unregistering $taskname, process should still be running."
-        Unregister-ScheduledTask -TaskName $taskname -Confirm:$false
-    } #try
-    catch {
-        $results = "Unable to unregister $taskname from registered scheduled tasks."
-        Throw
-    } #catch
-
-    try {
-        Write-Verbose "Validating $ProcessName is running"
+        Write-Verbose "Validating $ProcessName is running on $env:COMPUTERNAME"
         Get-Process -Name $ProcessName | Out-Null
-        Write-Verbose "Confirmed $ProcessName process is running"
-        [PSCustomObject]@{
-            success = $true
-            message = "Validated $ProcessName on $env:COMPUTERNAME"
-        } #pscustomobject
+        $message = "Validated process: $ProcessName on $env:COMPUTERNAME"
+        Write-Verbose $message
     } #try
     catch {
-        $results = "$ProcessName is NOT running on $env:COMPUTERNAME"
-        Throw
+        $message = "$ProcessName is NOT running on $env:COMPUTERNAME"
+        Throw $_
     } #catch
 
-} #try
+} #Main Try
+
 catch {
-    [PSCustomObject]@{
-        success = $false
-        message = $results
-    } #pscustomobject
-} #catch
+    $success = $false
+    $message += "`nError Msg: $($_.Tostring())"
+} #Main catch
+
 finally {
-    Write-Verbose "Setting error action preface back to $startpref"
-    $ErrorActionPreference = $startpref     
-} #finally
+    Write-Verbose "Setting error action preface back to $startpref on $env:COMPUTERNAME"
+    $ErrorActionPreference = $startpref  
+
+    Write-Verbose "Attempting to remove scheduled task: $taskname on $env:COMPUTERNAME"
+    if ($taskname) {
+        Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore | 
+        Unregister-ScheduledTask -Confirm:$false
+    }
+
+    [PSCustomObject]@{
+        success = $success
+        message = $message
+    } #pscustomobject returned from script
+} #Main finally
 
 
