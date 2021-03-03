@@ -14,29 +14,15 @@ param (
 
     [Parameter(Mandatory=$true, Position = 1)]
     [ValidateScript({
-        if((Get-Item "env:\$_" -ErrorAction Ignore).value | Test-Path -ErrorAction Ignore) {
+        if($_.EndsWith(".exe") -and (Test-Path $_ -ErrorAction Ignore)) {
             $true
         }
         else {
-            Throw "$_ is an invalid run location on $env:COMPUTERNAME"
+            Throw "$_ is an invalid path"
         }
     })]
     [string]
-    $Runlocation,
-
-    [Parameter(Mandatory=$true, Position = 2)]
-    [ValidateScript({
-        #check for invalid characters, words or combination of characters
-        if(($_.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -eq -1) -and 
-           ($_ -notmatch "^COM[0-9]|CON|LPT[0-9]|NUL|PRN|AUX|\.{2,}|\s{2,}|.*\.$|.*\s$")) {
-            $true
-        }
-        else {
-            Throw "$_ is an invalid filename."
-        }
-    })]
-    [string]
-    $ProcessName
+    $Path
 ) #param block
 
 #store error action preface to return at the end of script
@@ -47,31 +33,12 @@ $ErrorActionPreference = "Stop"
 #nested in try, catch, finally main for overall success determination
 try {
     $success = $true
-    
-    try {
-        $copyargs = @{
-            Path = Get-Command -Name "cmd" | Select-Object -ExpandProperty Source
-            Destination = Join-Path -Path (Get-Item -Path "env:\$Runlocation").Value -ChildPath "$ProcessName.exe"
-        } #copyargs hashtable
-    
-        if (Test-Path -Path $copyargs.Destination) {
-            Write-Verbose "$($copyargs.Destination) already exists on $env:COMPUTERNAME."
-        } #if test-path
-        else {
-            Write-Verbose "Copying cmd.exe to $($copyargs.Destination) on $env:COMPUTERNAME"
-            Copy-Item @copyargs -Force  
-        } #else   
-    } #try
-    catch {
-        $message = "Unable to create executable program on $env:COMPUTERNAME. Path: {0}, Destination: {1}" -f $copyargs.Path, $copyargs.Destination
-        Throw $_
-    } #catch
-    
+      
     try {
         Write-Verbose "Creating scheduled task arguments"
         $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$Principal'").SID
         $taskargs = @{
-            Action    = New-ScheduledTaskAction -Execute $copyargs.Destination
+            Action    = New-ScheduledTaskAction -Execute $path
             Settings  = New-ScheduledTaskSettingsSet -Hidden
             Principal = New-ScheduledTaskPrincipal -UserId $userid -LogonType ServiceAccount
         } #taskargs hashtable
@@ -98,6 +65,7 @@ try {
     } #catch
 
     try {
+        $ProcessName = (Split-Path -Path $Path -Leaf -Resolve) -replace "\.exe"
         Write-Verbose "Validating $ProcessName is running on $env:COMPUTERNAME"
         Get-Process -Name $ProcessName | Out-Null
         $message = "Validated process: $ProcessName on $env:COMPUTERNAME"
@@ -122,7 +90,7 @@ finally {
     Write-Verbose "Attempting to remove scheduled task: $taskname on $env:COMPUTERNAME"
     if ($taskname) {
         Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore | 
-        Unregister-ScheduledTask -Confirm:$false
+        Unregister-ScheduledTask -Confirm:$false -ErrorAction Ignore
     }
 
     [PSCustomObject]@{

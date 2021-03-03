@@ -9,15 +9,8 @@ $UpdateAdHocForm = {
                 $cbxAdHoc1,
                 $cbxAdHoc2
             ) #ActiveControls
-            $InactiveControls = @(
-                $lbltxtAdHoc2,
-                $lbltxtAdHoc3,
-                $lblcbxAdHoc3,
-                $txtAdHoc2,
-                $txtAdHoc3,
-                $cbxAdHoc3
-            ) #InactiveControls
-            #
+            $InactiveControls = $AdHocControls | Where-Object {$_ -notin $ActiveControls}
+
             # Configuring Controls
             $lbltxtAdHoc1.text = 'Process Name'
             $lblcbxAdHoc1.text = 'Run Location'
@@ -38,16 +31,7 @@ $UpdateAdHocForm = {
                 $txtAdHoc1,
                 $cbxAdHoc1
             ) #ActiveControls
-            $InactiveControls = @(
-                $lbltxtAdHoc2,
-                $lbltxtAdHoc3,
-                $lblcbxAdHoc2,
-                $lblcbxAdHoc3,
-                $txtAdHoc2,
-                $txtAdHoc3,
-                $cbxAdHoc2,
-                $cbxAdHoc3
-            ) #InactiveControls
+            $InactiveControls = $AdHocControls | Where-Object {$_ -notin $ActiveControls}
 
             # Configuring Controls
             $lbltxtAdHoc1.text = 'Executable Path:'
@@ -68,14 +52,7 @@ $UpdateAdHocForm = {
                 $txtAdHoc2,
                 $cbxAdHoc1
             ) #ActiveControls
-            $InactiveControls = @(
-                $lbltxtAdHoc3,
-                $lblcbxAdHoc2,
-                $lblcbxAdHoc3,
-                $txtAdHoc3,
-                $cbxAdHoc2,
-                $cbxAdHoc3
-            ) #InactiveControls
+            $InactiveControls = $AdHocControls | Where-Object {$_ -notin $ActiveControls}
 
             # Configuring Controls
             $lbltxtAdHoc1.text = 'Account Name:'
@@ -95,16 +72,7 @@ $UpdateAdHocForm = {
                 $txtAdHoc1,
                 $cbxAdHoc1
             ) #ActiveControls
-            $InactiveControls = @(
-                $lbltxtAdHoc2,
-                $lbltxtAdHoc3,
-                $lblcbxAdHoc2,
-                $lblcbxAdHoc3,
-                $txtAdHoc2,
-                $txtAdHoc3,
-                $cbxAdHoc2,
-                $cbxAdHoc3
-            ) #InactiveControls
+            $InactiveControls = $AdHocControls | Where-Object {$_ -notin $ActiveControls}
 
             # Configuring Controls
             $lbltxtAdHoc1.text = 'File Name:'
@@ -127,12 +95,7 @@ $UpdateAdHocForm = {
                 $cbxAdHoc1,
                 $cbxAdHoc2
             ) #ActiveControls
-            $InactiveControls = @(
-                $lbltxtAdHoc3,
-                $lblcbxAdHoc3,
-                $txtAdHoc3,
-                $cbxAdHoc3
-            ) #InactiveControls
+            $InactiveControls = $AdHocControls | Where-Object {$_ -notin $ActiveControls}
 
             # Configuring Controls
             $lbltxtAdHoc1.text = 'Key Name:'
@@ -163,4 +126,18 @@ $DropDown = [PSCustomObject]@{
 
 Add-Type -AssemblyName System.Windows.Forms
 . (Join-Path $PSScriptRoot 'main.designer.ps1')
+$AdHocControls = @(
+    $lbltxtAdHoc1,
+    $lbltxtAdHoc2,
+    $lbltxtAdHoc3,
+    $lblcbxAdHoc1,
+    $lblcbxAdHoc2,
+    $lblcbxAdHoc3,
+    $txtAdHoc1,
+    $txtAdHoc2,
+    $txtAdHoc3,
+    $cbxAdHoc1,
+    $cbxAdHoc2,
+    $cbxAdHoc3
+)
 $frmMain.ShowDialog()
