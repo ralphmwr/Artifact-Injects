@@ -11,14 +11,15 @@ $AdHocRun = {
     try {
         $Parameters = @{
             ErrorAction  = 'Stop'
-        }
-        $AdhocOptions = New-PSSessionOption @Parameters -ApplicationArguments @{verbose=$true}
+        } #Parameters
+
+        $AdhocOptions = New-PSSessionOption @Parameters -ApplicationArguments @{verbose=$cbVerbose.checked}
         
         $Parameters += @{            
             Credential    = $script:credential
             SessionOption = $AdhocOptions
             ComputerName = $txtAdHocTargets.Lines
-        }
+        } #Parameters
         $AdHocSession = New-PSSession @Parameters
 
         $Parameters = @{

@@ -52,6 +52,8 @@ param (
 Write-Verbose "Setting error action preference to 'Stop' for error handling purposes"
 $startpref = $ErrorActionPreference
 $ErrorActionPreference = "Stop"
+
+#to add verbose messaging (Invoked remotely), add an application argument with key of verbose and value of $true
 if ($PSSenderInfo.applicationarguments.verbose) {$VerbosePreference = 'Continue'}
 
 #nested in try, catch, finally main for overall success determination

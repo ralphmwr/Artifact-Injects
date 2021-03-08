@@ -11,6 +11,7 @@ $frmMain = New-Object -TypeName System.Windows.Forms.Form
 [System.Windows.Forms.Button]$btnLoadCredentials = $null
 [System.Windows.Forms.Label]$lblCredentials = $null
 [System.Windows.Forms.GroupBox]$gbxAdHoc = $null
+[System.Windows.Forms.CheckBox]$cbVerbose = $null
 [System.Windows.Forms.Button]$btnAddAutomation = $null
 [System.Windows.Forms.Button]$btnAdHocRemove = $null
 [System.Windows.Forms.Label]$lbltxtAdHocStatus = $null
@@ -69,6 +70,7 @@ $lbltxtAdHoc1 = (New-Object -TypeName System.Windows.Forms.Label)
 $txtAdHoc1 = (New-Object -TypeName System.Windows.Forms.TextBox)
 $lblAction = (New-Object -TypeName System.Windows.Forms.Label)
 $cbxAction = (New-Object -TypeName System.Windows.Forms.ComboBox)
+$cbVerbose = (New-Object -TypeName System.Windows.Forms.CheckBox)
 $gbxAutomation.SuspendLayout()
 ([System.ComponentModel.ISupportInitialize]$dgvAutomation).BeginInit()
 $gbxAdHoc.SuspendLayout()
@@ -203,6 +205,7 @@ $lblCredentials.UseCompatibleTextRendering = $true
 #
 #gbxAdHoc
 #
+$gbxAdHoc.Controls.Add($cbVerbose)
 $gbxAdHoc.Controls.Add($btnAddAutomation)
 $gbxAdHoc.Controls.Add($btnAdHocRemove)
 $gbxAdHoc.Controls.Add($lbltxtAdHocStatus)
@@ -288,7 +291,7 @@ $btnAdHocValidate.UseVisualStyleBackColor = $true
 $btnAdHocRun.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]230,[System.Int32]147))
 $btnAdHocRun.Name = [System.String]'btnAdHocRun'
 $btnAdHocRun.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]128,[System.Int32]23))
-$btnAdHocRun.TabIndex = [System.Int32]9
+$btnAdHocRun.TabIndex = [System.Int32]14
 $btnAdHocRun.Text = [System.String]'Run + Validate'
 $btnAdHocRun.UseCompatibleTextRendering = $true
 $btnAdHocRun.UseVisualStyleBackColor = $true
@@ -310,7 +313,7 @@ $txtAdHocTargets.Location = (New-Object -TypeName System.Drawing.Point -Argument
 $txtAdHocTargets.Multiline = $true
 $txtAdHocTargets.Name = [System.String]'txtAdHocTargets'
 $txtAdHocTargets.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]218,[System.Int32]118))
-$txtAdHocTargets.TabIndex = [System.Int32]14
+$txtAdHocTargets.TabIndex = [System.Int32]9
 #
 #lbltxtAdHoc3
 #
@@ -453,6 +456,16 @@ $cbxAction.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([Sys
 $cbxAction.TabIndex = [System.Int32]0
 $cbxAction.add_SelectedIndexChanged($UpdateAdHocForm)
 #
+#cbVerbose
+#
+$cbVerbose.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]730,[System.Int32]94))
+$cbVerbose.Name = [System.String]'cbVerbose'
+$cbVerbose.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]166,[System.Int32]24))
+$cbVerbose.TabIndex = [System.Int32]21
+$cbVerbose.Text = [System.String]'Include Verbose Messages'
+$cbVerbose.UseCompatibleTextRendering = $true
+$cbVerbose.UseVisualStyleBackColor = $true
+#
 #frmMain
 #
 $frmMain.ClientSize = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]958,[System.Int32]654))
@@ -479,6 +492,7 @@ Add-Member -InputObject $frmMain -Name lblFileLoaded -Value $lblFileLoaded -Memb
 Add-Member -InputObject $frmMain -Name btnLoadCredentials -Value $btnLoadCredentials -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name lblCredentials -Value $lblCredentials -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name gbxAdHoc -Value $gbxAdHoc -MemberType NoteProperty
+Add-Member -InputObject $frmMain -Name cbVerbose -Value $cbVerbose -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name btnAddAutomation -Value $btnAddAutomation -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name btnAdHocRemove -Value $btnAdHocRemove -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name lbltxtAdHocStatus -Value $lbltxtAdHocStatus -MemberType NoteProperty
