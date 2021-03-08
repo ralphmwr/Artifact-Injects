@@ -1,3 +1,118 @@
+Add-Type -AssemblyName PresentationCore, PresentationFramework
+$LoadCredentials = {
+    $script:credential = Get-Credential -Message 'Enter Credentials for Remote Host Access'
+    $lblCredentials.text = "Credentials Loaded For {0}" -f $credential.UserName
+    $lblCredentials.ForeColor = [System.Drawing.Color]::Green
+    $btnLoadCredentials.Text = "Re-Load Credentials"
+    $DropDown.Principal += $script:credential.UserName
+}
+$AdHocRun = {
+    $txtAdHocStatus.Lines = "Running..."
+    try {
+        $Parameters = @{
+            ErrorAction  = 'Stop'
+        }
+        $AdhocOptions = New-PSSessionOption @Parameters -ApplicationArguments @{verbose=$true}
+        
+        $Parameters += @{            
+            Credential    = $script:credential
+            SessionOption = $AdhocOptions
+            ComputerName = $txtAdHocTargets.Lines
+        }
+        $AdHocSession = New-PSSession @Parameters
+
+        $Parameters = @{
+            Session     = $AdHocSession
+            ErrorAction = 'Stop'
+        }
+        switch ($cbxAction.SelectedItem.ToString()) {
+            'Generic Process Execution' {  
+                $Parameters.FilePath = Join-Path -Path $PSScriptRoot -ChildPath 'SRC_Scripts\Invoke-GenericProcess.ps1'
+                $Parameters.argumentlist = $cbxAdHoc2.SelectedItem.ToString(),
+                                           $cbxAdHoc1.SelectedItem.ToString(),
+                                           $txtAdHoc1.Text
+    
+                if ($Parameters.argumentlist[0] -ne 'SYSTEM') {
+                    $msgTitle = "Use {0} as Principal?" -f $Parameters.argumentlist[0]
+                    $msgBody  = "{0} must be logged in for this process to start. Are you sure you want to use this Principal?" -f $Parameters.argumentlist[0]
+                    $msgBtns  = [system.Windows.messageboxbutton]::YesNo
+                    $msgIcon  = [system.Windows.messageboximage]::Warning
+                    if([system.Windows.messagebox]::Show($msgBody,$msgTitle,$msgBtns,$msgIcon) -eq 'Yes') {
+                        $Parameters.argumentlist += $credential
+                    } #if are you sure?
+                    else {Break}
+                } #if not SYSTEM as principal
+                
+                try {
+                    Invoke-Command @Parameters |
+                    ForEach-Object {$txtAdHocStatus.Lines += ("{0} - {1}" -f $_.pscomputername, $_.message)}  
+                } #try
+                catch {
+                    $txtAdHocStatus.Lines += "Invoke-Command error : "
+                    Throw $_
+                } #catch
+            } #Generic Process Execution
+            
+            'Start Process' {
+                $Parameters.FilePath = Join-Path -Path $PSScriptRoot -ChildPath 'SRC_Scripts\Invoke-Process.ps1'
+                $Parameters.argumentlist = $cbxAdHoc1.SelectedItem.ToString(),
+                                           $txtAdHoc1.Text
+    
+                if ($Parameters.argumentlist[0] -ne 'SYSTEM') {
+                    $msgTitle = "Use {0} as Principal?" -f $Parameters.argumentlist[0]
+                    $msgBody  = "{0} must be logged in for this process to start. Are you sure you want to use this Principal?" -f $Parameters.argumentlist[0]
+                    $msgBtns  = [system.Windows.messageboxbutton]::YesNo
+                    $msgIcon  = [system.Windows.messageboximage]::Warning
+                    if([system.Windows.messagebox]::Show($msgBody,$msgTitle,$msgBtns,$msgIcon) -eq 'Yes') {
+                        $Parameters.argumentlist += $credential
+                    } #if are you sure?
+                    else {Break}
+                } #if not SYSTEM as principal
+                
+                try {
+                    Invoke-Command @Parameters |
+                    ForEach-Object {$txtAdHocStatus.Lines += ("{0} - {1}" -f $_.pscomputername, $_.message)}  
+                } #try
+                catch {
+                    $txtAdHocStatus.Lines += "Invoke-Command error : "
+                    Throw $_
+                } #catch
+            } #Start Process
+            'New Local Account' {
+    
+            } #New Local Account
+            'Startup Folder Persistence' {
+    
+            } #Startup Folder Persistence
+            'Registry Persistence' {
+    
+            } #Registry Persistence
+            'WMI Subscription Persistence' {
+    
+            } #WMI Subscription Persistence
+            'Remove Firewall Rule' {
+    
+            } #Remove Firewall Rule
+            'Add Firewall Rule' {
+    
+            } #Add Firewall Rule
+            Default {
+                [system.Windows.messagebox]::Show('Select an Action!')
+            } #default
+        } #switch
+    }
+    catch {
+        $txtAdHocStatus.Lines += ("Error Msg: {0} : {1}" -f $_.Tostring(), $_.InvocationInfo.Line.trim())
+    }
+    finally {
+        $AdHocSession | Remove-PSSession -ErrorAction Ignore
+    }
+
+
+
+    
+} #AdHoc Run+Validate
+
 $UpdateAdHocForm = {
     switch ($cbxAction.SelectedItem.ToString()) {
         'Generic Process Execution' {
@@ -118,7 +233,7 @@ $UpdateAdHocForm = {
 
 $DropDown = [PSCustomObject]@{
     RunFrom     = 'AllUsersProfile','AppData','ProgramFiles','Temp'
-    Principal   = 'SYSTEM','Credentialed User'
+    Principal   = @('SYSTEM')
     Persistance = 'None','Registry-HKU','Registry-HKLM','Registry-HKCU'
     Direction   = 'Inbound','Outbound','Both'
     Hive        = 'HKLM','HKU','HKCU'

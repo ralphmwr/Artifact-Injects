@@ -11,6 +11,7 @@ $frmMain = New-Object -TypeName System.Windows.Forms.Form
 [System.Windows.Forms.Button]$btnLoadCredentials = $null
 [System.Windows.Forms.Label]$lblCredentials = $null
 [System.Windows.Forms.GroupBox]$gbxAdHoc = $null
+[System.Windows.Forms.Button]$btnAddAutomation = $null
 [System.Windows.Forms.Button]$btnAdHocRemove = $null
 [System.Windows.Forms.Label]$lbltxtAdHocStatus = $null
 [System.Windows.Forms.TextBox]$txtAdHocStatus = $null
@@ -35,6 +36,7 @@ $frmMain = New-Object -TypeName System.Windows.Forms.Form
 function InitializeComponent
 {
 $gbxAutomation = (New-Object -TypeName System.Windows.Forms.GroupBox)
+$btnAutoRemove = (New-Object -TypeName System.Windows.Forms.Button)
 $btnValidate = (New-Object -TypeName System.Windows.Forms.Button)
 $btnAutoRun = (New-Object -TypeName System.Windows.Forms.Button)
 $lblAutoValidation = (New-Object -TypeName System.Windows.Forms.Label)
@@ -45,6 +47,8 @@ $lblFileLoaded = (New-Object -TypeName System.Windows.Forms.Label)
 $btnLoadCredentials = (New-Object -TypeName System.Windows.Forms.Button)
 $lblCredentials = (New-Object -TypeName System.Windows.Forms.Label)
 $gbxAdHoc = (New-Object -TypeName System.Windows.Forms.GroupBox)
+$btnAddAutomation = (New-Object -TypeName System.Windows.Forms.Button)
+$btnAdHocRemove = (New-Object -TypeName System.Windows.Forms.Button)
 $lbltxtAdHocStatus = (New-Object -TypeName System.Windows.Forms.Label)
 $txtAdHocStatus = (New-Object -TypeName System.Windows.Forms.TextBox)
 $btnAdHocValidate = (New-Object -TypeName System.Windows.Forms.Button)
@@ -65,8 +69,6 @@ $lbltxtAdHoc1 = (New-Object -TypeName System.Windows.Forms.Label)
 $txtAdHoc1 = (New-Object -TypeName System.Windows.Forms.TextBox)
 $lblAction = (New-Object -TypeName System.Windows.Forms.Label)
 $cbxAction = (New-Object -TypeName System.Windows.Forms.ComboBox)
-$btnAutoRemove = (New-Object -TypeName System.Windows.Forms.Button)
-$btnAdHocRemove = (New-Object -TypeName System.Windows.Forms.Button)
 $gbxAutomation.SuspendLayout()
 ([System.ComponentModel.ISupportInitialize]$dgvAutomation).BeginInit()
 $gbxAdHoc.SuspendLayout()
@@ -89,6 +91,16 @@ $gbxAutomation.TabIndex = [System.Int32]1
 $gbxAutomation.TabStop = $false
 $gbxAutomation.Text = [System.String]'Automation'
 $gbxAutomation.UseCompatibleTextRendering = $true
+#
+#btnAutoRemove
+#
+$btnAutoRemove.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]153,[System.Int32]17))
+$btnAutoRemove.Name = [System.String]'btnAutoRemove'
+$btnAutoRemove.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]128,[System.Int32]23))
+$btnAutoRemove.TabIndex = [System.Int32]9
+$btnAutoRemove.Text = [System.String]'Remove Artifacts'
+$btnAutoRemove.UseCompatibleTextRendering = $true
+$btnAutoRemove.UseVisualStyleBackColor = $true
 #
 #btnValidate
 #
@@ -175,6 +187,7 @@ $btnLoadCredentials.TabIndex = [System.Int32]3
 $btnLoadCredentials.Text = [System.String]'Load Credentials'
 $btnLoadCredentials.UseCompatibleTextRendering = $true
 $btnLoadCredentials.UseVisualStyleBackColor = $true
+$btnLoadCredentials.add_Click($LoadCredentials)
 #
 #lblCredentials
 #
@@ -190,6 +203,7 @@ $lblCredentials.UseCompatibleTextRendering = $true
 #
 #gbxAdHoc
 #
+$gbxAdHoc.Controls.Add($btnAddAutomation)
 $gbxAdHoc.Controls.Add($btnAdHocRemove)
 $gbxAdHoc.Controls.Add($lbltxtAdHocStatus)
 $gbxAdHoc.Controls.Add($txtAdHocStatus)
@@ -219,6 +233,26 @@ $gbxAdHoc.TabStop = $false
 $gbxAdHoc.Text = [System.String]'Ad-Hoc'
 $gbxAdHoc.UseCompatibleTextRendering = $true
 #
+#btnAddAutomation
+#
+$btnAddAutomation.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]230,[System.Int32]234))
+$btnAddAutomation.Name = [System.String]'btnAddAutomation'
+$btnAddAutomation.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]128,[System.Int32]23))
+$btnAddAutomation.TabIndex = [System.Int32]20
+$btnAddAutomation.Text = [System.String]'Add to Automation'
+$btnAddAutomation.UseCompatibleTextRendering = $true
+$btnAddAutomation.UseVisualStyleBackColor = $true
+#
+#btnAdHocRemove
+#
+$btnAdHocRemove.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]230,[System.Int32]205))
+$btnAdHocRemove.Name = [System.String]'btnAdHocRemove'
+$btnAdHocRemove.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]128,[System.Int32]23))
+$btnAdHocRemove.TabIndex = [System.Int32]19
+$btnAdHocRemove.Text = [System.String]'Remove Artifact'
+$btnAdHocRemove.UseCompatibleTextRendering = $true
+$btnAdHocRemove.UseVisualStyleBackColor = $true
+#
 #lbltxtAdHocStatus
 #
 $lbltxtAdHocStatus.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]364,[System.Int32]121))
@@ -231,13 +265,13 @@ $lbltxtAdHocStatus.UseCompatibleTextRendering = $true
 #
 #txtAdHocStatus
 #
+$txtAdHocStatus.Enabled = $false
 $txtAdHocStatus.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]364,[System.Int32]147))
 $txtAdHocStatus.Multiline = $true
 $txtAdHocStatus.Name = [System.String]'txtAdHocStatus'
 $txtAdHocStatus.ReadOnly = $true
 $txtAdHocStatus.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]564,[System.Int32]118))
 $txtAdHocStatus.TabIndex = [System.Int32]17
-$txtAdHocStatus.Visible = $false
 #
 #btnAdHocValidate
 #
@@ -258,6 +292,7 @@ $btnAdHocRun.TabIndex = [System.Int32]9
 $btnAdHocRun.Text = [System.String]'Run + Validate'
 $btnAdHocRun.UseCompatibleTextRendering = $true
 $btnAdHocRun.UseVisualStyleBackColor = $true
+$btnAdHocRun.add_Click($AdHocRun)
 #
 #lbltxtAdHocTargets
 #
@@ -328,6 +363,7 @@ $lblcbxAdHoc3.Visible = $false
 #
 #cbxAdHoc3
 #
+$cbxAdHoc3.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
 $cbxAdHoc3.FormattingEnabled = $true
 $cbxAdHoc3.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]454,[System.Int32]97))
 $cbxAdHoc3.Name = [System.String]'cbxAdHoc3'
@@ -348,6 +384,7 @@ $lblcbxAdHoc2.Visible = $false
 #
 #cbxAdHoc2
 #
+$cbxAdHoc2.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
 $cbxAdHoc2.FormattingEnabled = $true
 $cbxAdHoc2.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]230,[System.Int32]97))
 $cbxAdHoc2.Name = [System.String]'cbxAdHoc2'
@@ -368,6 +405,7 @@ $lblcbxAdHoc1.Visible = $false
 #
 #cbxAdHoc1
 #
+$cbxAdHoc1.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
 $cbxAdHoc1.FormattingEnabled = $true
 $cbxAdHoc1.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]6,[System.Int32]97))
 $cbxAdHoc1.Name = [System.String]'cbxAdHoc1'
@@ -406,6 +444,7 @@ $lblAction.UseCompatibleTextRendering = $true
 #
 #cbxAction
 #
+$cbxAction.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
 $cbxAction.FormattingEnabled = $true
 $cbxAction.Items.AddRange([System.Object[]]@([System.String]'Generic Process Execution',[System.String]'Start Process',[System.String]'New Local Account',[System.String]'Startup Folder Persistence',[System.String]'Registry Persistence',[System.String]'WMI Subscription Persistence',[System.String]'Scheduled Task Persistence',[System.String]'Remove Firewall Rule',[System.String]'Add Firewall Rule'))
 $cbxAction.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]6,[System.Int32]48))
@@ -413,26 +452,6 @@ $cbxAction.Name = [System.String]'cbxAction'
 $cbxAction.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]218,[System.Int32]21))
 $cbxAction.TabIndex = [System.Int32]0
 $cbxAction.add_SelectedIndexChanged($UpdateAdHocForm)
-#
-#btnAutoRemove
-#
-$btnAutoRemove.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]153,[System.Int32]17))
-$btnAutoRemove.Name = [System.String]'btnAutoRemove'
-$btnAutoRemove.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]128,[System.Int32]23))
-$btnAutoRemove.TabIndex = [System.Int32]9
-$btnAutoRemove.Text = [System.String]'Remove Artifacts'
-$btnAutoRemove.UseCompatibleTextRendering = $true
-$btnAutoRemove.UseVisualStyleBackColor = $true
-#
-#btnAdHocRemove
-#
-$btnAdHocRemove.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]230,[System.Int32]205))
-$btnAdHocRemove.Name = [System.String]'btnAdHocRemove'
-$btnAdHocRemove.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]128,[System.Int32]23))
-$btnAdHocRemove.TabIndex = [System.Int32]19
-$btnAdHocRemove.Text = [System.String]'Remove Artifacts'
-$btnAdHocRemove.UseCompatibleTextRendering = $true
-$btnAdHocRemove.UseVisualStyleBackColor = $true
 #
 #frmMain
 #
@@ -460,6 +479,7 @@ Add-Member -InputObject $frmMain -Name lblFileLoaded -Value $lblFileLoaded -Memb
 Add-Member -InputObject $frmMain -Name btnLoadCredentials -Value $btnLoadCredentials -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name lblCredentials -Value $lblCredentials -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name gbxAdHoc -Value $gbxAdHoc -MemberType NoteProperty
+Add-Member -InputObject $frmMain -Name btnAddAutomation -Value $btnAddAutomation -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name btnAdHocRemove -Value $btnAdHocRemove -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name lbltxtAdHocStatus -Value $lbltxtAdHocStatus -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name txtAdHocStatus -Value $txtAdHocStatus -MemberType NoteProperty

@@ -2,7 +2,12 @@
 param (
     [Parameter(Mandatory=$true, Position = 0)]
     [ValidateScript({
-        if (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$_'" -ErrorAction Ignore) {
+        $Para = @{
+            ClassName = 'Win32_Account'
+            ErrorAction = 'Ignore'
+        }
+        $caption = $_ -replace '\\','\\'
+        if ((Get-CimInstance @Para -Filter "Caption = '$caption'") -or (Get-CimInstance @Para -Filter "Name = '$caption'")) {
             $true
         }
         else {
@@ -36,13 +41,18 @@ param (
         }
     })]
     [string]
-    $ProcessName
+    $ProcessName,
+
+    [Parameter(Position = 3)]
+    [pscredential]
+    $Credential
 ) #param block
 
 #store error action preface to return at the end of script
 Write-Verbose "Setting error action preference to 'Stop' for error handling purposes"
 $startpref = $ErrorActionPreference
 $ErrorActionPreference = "Stop"
+if ($PSSenderInfo.applicationarguments.verbose) {$VerbosePreference = 'Continue'}
 
 #nested in try, catch, finally main for overall success determination
 try {
@@ -63,21 +73,33 @@ try {
         } #else   
     } #try
     catch {
-        $message = "Unable to create executable program on $env:COMPUTERNAME. Path: {0}, Destination: {1}" -f $copyargs.Path, $copyargs.Destination
+        $message = "Unable to create executable program on $env:COMPUTERNAME. Path: {0}, Destination: {1} " -f $copyargs.Path, $copyargs.Destination
         Throw $_
     } #catch
     
     try {
         Write-Verbose "Creating scheduled task arguments"
-        $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$Principal'").SID
+        #$Principal = $Principal -replace '\','\\' #WQL needs to escape the literal \
+        $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Caption = '$($Principal.Replace('\','\\'))'").SID
+        if (!$userid) {
+            $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$Principal'").SID
+        }
+        if ($userid.SIDType -eq 1) {
+            $PrincipalArg = @{LogonType = "Password"}
+            $RegisterArg  = @{Password  = $Credential.GetNetworkCredential().Password}
+        }
+        else {
+            $PrincipalArg = @{LogonType = "ServiceAccount"}
+            $RegisterArg  = @{}
+        }
         $taskargs = @{
             Action    = New-ScheduledTaskAction -Execute $copyargs.Destination
             Settings  = New-ScheduledTaskSettingsSet -Hidden
-            Principal = New-ScheduledTaskPrincipal -UserId $userid -LogonType ServiceAccount
+            Principal = New-ScheduledTaskPrincipal -UserId $userid @PrincipalArg
         } #taskargs hashtable
     } #try
     catch {
-        $message = "Unable to create scheduled task arguments on $env:COMPUTERNAME"
+        $message = "Unable to create scheduled task arguments on $env:COMPUTERNAME "
         Throw $_
     } #catch
     
@@ -89,11 +111,12 @@ try {
     try {
         Write-Verbose "Creating/Registering/Starting scheduled task $taskname on $env:COMPUTERNAME"
         New-ScheduledTask @taskargs | 
-            Register-ScheduledTask -TaskName $taskname | 
+            Register-ScheduledTask -TaskName $taskname @RegisterArg | 
                 Start-ScheduledTask
+                
     } #try
     catch {
-        $message = "Unable to start process from scheduled task - $taskname on $env:COMPUTERNAME"
+        $message = "Unable to start process from scheduled task - $taskname on $env:COMPUTERNAME "
         Throw $_
     } #catch
 
@@ -104,7 +127,7 @@ try {
         Write-Verbose $message
     } #try
     catch {
-        $message = "$ProcessName is NOT running on $env:COMPUTERNAME"
+        $message = "$ProcessName is NOT running on $env:COMPUTERNAME "
         Throw $_
     } #catch
 
@@ -112,7 +135,7 @@ try {
 
 catch {
     $success = $false
-    $message += "`nError Msg: $($_.Tostring())"
+    $message += (": Error Msg: {0} : {1}" -f $_.Tostring(), $_.InvocationInfo.Line.trim())
 } #Main catch
 
 finally {
@@ -123,6 +146,8 @@ finally {
     if ($taskname) {
         Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore | 
         Unregister-ScheduledTask -Confirm:$false
+        if ($?) {Write-Verbose "Removed $taskname from scheduled tasks"}
+        else {Write-Verbose "Unable to remove $taskname from scheduled tasks"}
     }
 
     [PSCustomObject]@{

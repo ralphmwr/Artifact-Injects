@@ -37,10 +37,18 @@ try {
     try {
         Write-Verbose "Creating scheduled task arguments"
         $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$Principal'").SID
+        if ($userid.SIDType -eq 1) {
+            $PrincipalArg = @{LogonType = "Password"}
+            $RegisterArg  = @{Password  = $Credential.GetNetworkCredential().Password}
+        }
+        else {
+            $PrincipalArg = @{LogonType = "ServiceAccount"}
+            $RegisterArg  = @{}
+        }
         $taskargs = @{
             Action    = New-ScheduledTaskAction -Execute $path
             Settings  = New-ScheduledTaskSettingsSet -Hidden
-            Principal = New-ScheduledTaskPrincipal -UserId $userid -LogonType ServiceAccount
+            Principal = New-ScheduledTaskPrincipal -UserId $userid @PrincipalArg
         } #taskargs hashtable
     } #try
     catch {
