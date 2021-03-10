@@ -12,17 +12,33 @@ param (
     [string]
     $Principal,
 
-    [Parameter(Mandatory=$true, Position = 1)]
+    [Parameter(Mandatory=$true, Position=1)]
     [ValidateScript({
-        if($_.EndsWith(".exe") -and (Test-Path $_ -ErrorAction Ignore)) {
-            $true
+        if (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$_'" -ErrorAction Ignore) {
+            Throw "$_ already exists on $env:COMPUTERNAME"
+        }
+        elseif (($_ -notmatch '^[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*$') -or ($_.length -notin 8..20)) {
+            Throw "$_ is not a valid user name"
         }
         else {
-            Throw "$_ is an invalid path"
+            $true
         }
     })]
-    [string]
-    $Path
+    [String]
+    $AccountName,
+
+    [Parameter(Mandatory=$true, Position = 2)]
+    [ValidateScript({
+        $ValidGroups = (Get-CimInstance -ClassName win32_group).name
+        foreach ($group in @($_)) {
+            if ($group -notin $ValidGroups) {
+                Throw "$group does not exist on $env:COMPUTERNAME"
+            }
+        }
+        $true
+    })]
+    [string[]]
+    $GroupMembership
 ) #param block
 
 #store error action preface to return at the end of script
@@ -48,8 +64,15 @@ try {
             $PrincipalArg = @{LogonType = "ServiceAccount"}
             $RegisterArg  = @{}
         }
+        $script = {
+            New-LocalUser -Name $AccountName -NoPassword | Out-Null
+            foreach ($group in $GroupMembership) {
+                ([ADSI]("WinNT://$env:COMPUTERNAME/$group,group").add("WinNT://$AccountName,user"))
+            } #foreach            
+        } #script
+
         $taskargs = @{
-            Action    = New-ScheduledTaskAction -Execute $path
+            Action    = New-ScheduledTaskAction -Execute "powershell.exe -script $script"
             Settings  = New-ScheduledTaskSettingsSet -Hidden
             Principal = New-ScheduledTaskPrincipal -UserId $userid @PrincipalArg
         } #taskargs hashtable
