@@ -1,11 +1,68 @@
 Add-Type -AssemblyName PresentationCore, PresentationFramework
+
+$AddAutomation = {
+    if ($script:Automationxml) {
+        $xml =  @"
+    
+    <artifact>
+        <targets>$($txtAdHocTargets.Lines -join ", ")</targets>
+        <action>$($cbxAction.SelectedItem.ToString())</action>   
+"@
+        switch ($cbxAction.SelectedItem.ToString()) {
+            'Generic Process Execution' {  
+                $xml += @"
+
+        <parameter name='Principal'>$($cbxAdHoc2.SelectedItem.ToString())</parameter>
+        <parameter name='Runlocation'>$($cbxAdHoc1.SelectedItem.ToString())</parameter>
+        <parameter name='ProcessName'>$($txtAdHoc1.Text)</parameter>
+"@
+            } #generic process execution
+        } #switch
+        $xml += '</artifact>'
+        $autonode = $script:Automationxml | 
+            Select-Xml -XPath '//automation' | 
+                Select-Object -ExpandProperty node
+        $autonode.innerxml += $xml
+        $script:Automationxml.automation.outerxml | Set-Content -Path $Script:Automationfile -Force
+        $updatedgvAutomation.invoke()
+    } #if
+} #AddAutomation script block
+
+$NewAutomation = {
+    $saveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+    $saveFileDialog.Filter = "xml files (*.xml)|*.xml"
+    $saveFileDialog.FilterIndex = 2
+    $saveFileDialog.ValidateNames = $true
+    if ($saveFileDialog.ShowDialog() -eq [System.windows.forms.dialogresult]::OK) {
+        $Script:Automationfile     = $saveFileDialog.FileName
+        $lblFileLoaded.text        = "File Loaded: '$Script:Automationfile'"
+        $lblFileLoaded.Forecolor   = [System.Drawing.Color]::Green
+        "<automation></automation>" | Set-Content -Path $Script:Automationfile
+        [xml]$script:Automationxml = Get-Content -Path $Script:Automationfile
+    } #if
+} #NewAutomation script block
+
+$LoadAutomation = {
+    $openFileDialog = New-Object System.windows.forms.openFileDialog
+    $openFileDialog.Filter = "xml files (*.xml)|*.xml"
+    $openFileDialog.FilterIndex = 2
+    if ($openFileDialog.ShowDialog() -eq [system.windows.forms.dialogresult]::OK) {
+        $Script:Automationfile       = $openFileDialog.FileName
+        $lblFileLoaded.text          = $Script:Automationfile
+        $lblFileLoaded.Forecolor      = [System.Drawing.Color]::Green 
+        [xml]$script:Automationxml   = Get-Content -Path $Script:Automationfile
+        $updatedgvAutomation.invoke()
+    } #if
+} #LoadAutomation script block
+
 $LoadCredentials = {
     $script:credential = Get-Credential -Message 'Enter Credentials for Remote Host Access'
     $lblCredentials.text = "Credentials Loaded For {0}" -f $credential.UserName
     $lblCredentials.ForeColor = [System.Drawing.Color]::Green
     $btnLoadCredentials.Text = "Re-Load Credentials"
     $DropDown.Principal += $script:credential.UserName
-}
+} #LoadCredential script block
+
 $AdHocRun = {
     $txtAdHocStatus.Lines = "Running..."
     try {
@@ -107,11 +164,7 @@ $AdHocRun = {
     }
     finally {
         $AdHocSession | Remove-PSSession -ErrorAction Ignore
-    }
-
-
-
-    
+    }   
 } #AdHoc Run+Validate
 
 $UpdateAdHocForm = {
@@ -232,10 +285,32 @@ $UpdateAdHocForm = {
     } #Switch cbxAction.selectitem.tostring()
 } #UpdateAdHocForm scriptblock
 
+$updatedgvAutomation = {
+    if ($Script:Automationfile){
+        $dgvAutomation.Visible = $true
+        $dgvAutomation.ColumnCount = 4
+        $dgvAutomation.Columns[0].Name = "Targets"
+        $dgvAutomation.Columns[1].Name = "Action"
+        $dgvAutomation.Columns[2].Name = "Parameters"
+        $dgvAutomation.Columns[3].Name = "Status"
+
+        foreach ($artifact in $Script:Automationxml.automation.artifact) {
+            $row = @($artifact.Targets)
+            $row += $artifact.Action
+            $row += ($artifact.parameter | 
+                Group-Object -Property name |
+                    Select-Object @{n='param';e={"$($_.name)=$($_.group.'#text' -join ', ')"}}).param -join "; "
+            $row += "Not Validated"
+            $dgvAutomation.rows.add($row)
+        }
+        
+    } #if
+} #updatedgvAutomation
+
 $DropDown = [PSCustomObject]@{
     RunFrom     = 'AllUsersProfile','AppData','ProgramFiles','Temp'
     Principal   = @('SYSTEM')
-    Persistance = 'None','Registry-HKU','Registry-HKLM','Registry-HKCU'
+    Persistance = 'Registry-HKU','Registry-HKLM','Registry-HKCU'
     Direction   = 'Inbound','Outbound','Both'
     Hive        = 'HKLM','HKU','HKCU'
 } #DropDown definition

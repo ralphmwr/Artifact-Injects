@@ -1,5 +1,6 @@
 $frmMain = New-Object -TypeName System.Windows.Forms.Form
 [System.Windows.Forms.GroupBox]$gbxAutomation = $null
+[System.Windows.Forms.Button]$btnNewAutomation = $null
 [System.Windows.Forms.Button]$btnAutoRemove = $null
 [System.Windows.Forms.Button]$btnValidate = $null
 [System.Windows.Forms.Button]$btnAutoRun = $null
@@ -37,6 +38,7 @@ $frmMain = New-Object -TypeName System.Windows.Forms.Form
 function InitializeComponent
 {
 $gbxAutomation = (New-Object -TypeName System.Windows.Forms.GroupBox)
+$btnNewAutomation = (New-Object -TypeName System.Windows.Forms.Button)
 $btnAutoRemove = (New-Object -TypeName System.Windows.Forms.Button)
 $btnValidate = (New-Object -TypeName System.Windows.Forms.Button)
 $btnAutoRun = (New-Object -TypeName System.Windows.Forms.Button)
@@ -48,6 +50,7 @@ $lblFileLoaded = (New-Object -TypeName System.Windows.Forms.Label)
 $btnLoadCredentials = (New-Object -TypeName System.Windows.Forms.Button)
 $lblCredentials = (New-Object -TypeName System.Windows.Forms.Label)
 $gbxAdHoc = (New-Object -TypeName System.Windows.Forms.GroupBox)
+$cbVerbose = (New-Object -TypeName System.Windows.Forms.CheckBox)
 $btnAddAutomation = (New-Object -TypeName System.Windows.Forms.Button)
 $btnAdHocRemove = (New-Object -TypeName System.Windows.Forms.Button)
 $lbltxtAdHocStatus = (New-Object -TypeName System.Windows.Forms.Label)
@@ -70,7 +73,6 @@ $lbltxtAdHoc1 = (New-Object -TypeName System.Windows.Forms.Label)
 $txtAdHoc1 = (New-Object -TypeName System.Windows.Forms.TextBox)
 $lblAction = (New-Object -TypeName System.Windows.Forms.Label)
 $cbxAction = (New-Object -TypeName System.Windows.Forms.ComboBox)
-$cbVerbose = (New-Object -TypeName System.Windows.Forms.CheckBox)
 $gbxAutomation.SuspendLayout()
 ([System.ComponentModel.ISupportInitialize]$dgvAutomation).BeginInit()
 $gbxAdHoc.SuspendLayout()
@@ -78,6 +80,7 @@ $frmMain.SuspendLayout()
 #
 #gbxAutomation
 #
+$gbxAutomation.Controls.Add($btnNewAutomation)
 $gbxAutomation.Controls.Add($btnAutoRemove)
 $gbxAutomation.Controls.Add($btnValidate)
 $gbxAutomation.Controls.Add($btnAutoRun)
@@ -94,9 +97,20 @@ $gbxAutomation.TabStop = $false
 $gbxAutomation.Text = [System.String]'Automation'
 $gbxAutomation.UseCompatibleTextRendering = $true
 #
+#btnNewAutomation
+#
+$btnNewAutomation.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]153,[System.Int32]20))
+$btnNewAutomation.Name = [System.String]'btnNewAutomation'
+$btnNewAutomation.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]128,[System.Int32]23))
+$btnNewAutomation.TabIndex = [System.Int32]5
+$btnNewAutomation.Text = [System.String]'New Automation File'
+$btnNewAutomation.UseCompatibleTextRendering = $true
+$btnNewAutomation.UseVisualStyleBackColor = $true
+$btnNewAutomation.add_Click($NewAutomation)
+#
 #btnAutoRemove
 #
-$btnAutoRemove.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]153,[System.Int32]17))
+$btnAutoRemove.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]287,[System.Int32]49))
 $btnAutoRemove.Name = [System.String]'btnAutoRemove'
 $btnAutoRemove.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]128,[System.Int32]23))
 $btnAutoRemove.TabIndex = [System.Int32]9
@@ -144,6 +158,7 @@ $btnLoadAutomation.TabIndex = [System.Int32]0
 $btnLoadAutomation.Text = [System.String]'Load-Automation-File'
 $btnLoadAutomation.UseCompatibleTextRendering = $true
 $btnLoadAutomation.UseVisualStyleBackColor = $true
+$btnLoadAutomation.add_Click($LoadAutomation)
 #
 #lblAutomationName
 #
@@ -236,6 +251,16 @@ $gbxAdHoc.TabStop = $false
 $gbxAdHoc.Text = [System.String]'Ad-Hoc'
 $gbxAdHoc.UseCompatibleTextRendering = $true
 #
+#cbVerbose
+#
+$cbVerbose.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]730,[System.Int32]94))
+$cbVerbose.Name = [System.String]'cbVerbose'
+$cbVerbose.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]166,[System.Int32]24))
+$cbVerbose.TabIndex = [System.Int32]21
+$cbVerbose.Text = [System.String]'Include Verbose Messages'
+$cbVerbose.UseCompatibleTextRendering = $true
+$cbVerbose.UseVisualStyleBackColor = $true
+#
 #btnAddAutomation
 #
 $btnAddAutomation.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]230,[System.Int32]234))
@@ -245,6 +270,7 @@ $btnAddAutomation.TabIndex = [System.Int32]20
 $btnAddAutomation.Text = [System.String]'Add to Automation'
 $btnAddAutomation.UseCompatibleTextRendering = $true
 $btnAddAutomation.UseVisualStyleBackColor = $true
+$btnAddAutomation.add_Click($AddAutomation)
 #
 #btnAdHocRemove
 #
@@ -456,16 +482,6 @@ $cbxAction.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([Sys
 $cbxAction.TabIndex = [System.Int32]0
 $cbxAction.add_SelectedIndexChanged($UpdateAdHocForm)
 #
-#cbVerbose
-#
-$cbVerbose.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]730,[System.Int32]94))
-$cbVerbose.Name = [System.String]'cbVerbose'
-$cbVerbose.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]166,[System.Int32]24))
-$cbVerbose.TabIndex = [System.Int32]21
-$cbVerbose.Text = [System.String]'Include Verbose Messages'
-$cbVerbose.UseCompatibleTextRendering = $true
-$cbVerbose.UseVisualStyleBackColor = $true
-#
 #frmMain
 #
 $frmMain.ClientSize = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]958,[System.Int32]654))
@@ -481,6 +497,7 @@ $gbxAdHoc.PerformLayout()
 $frmMain.ResumeLayout($false)
 Add-Member -InputObject $frmMain -Name base -Value $base -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name gbxAutomation -Value $gbxAutomation -MemberType NoteProperty
+Add-Member -InputObject $frmMain -Name btnNewAutomation -Value $btnNewAutomation -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name btnAutoRemove -Value $btnAutoRemove -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name btnValidate -Value $btnValidate -MemberType NoteProperty
 Add-Member -InputObject $frmMain -Name btnAutoRun -Value $btnAutoRun -MemberType NoteProperty

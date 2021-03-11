@@ -27,7 +27,7 @@ param (
     [String]
     $AccountName,
 
-    [Parameter(Mandatory=$true, Position = 2)]
+    [Parameter(Position = 2)]
     [ValidateScript({
         $ValidGroups = (Get-CimInstance -ClassName win32_group).name
         foreach ($group in @($_)) {
