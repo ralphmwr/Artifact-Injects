@@ -1,2 +1,2 @@
-# Artifact-Injects
+# Invoke-Artifacts
 This project is to consolidate, clean-up and create a GUI for injecting host artifacts on remote machines to simulate indicators of compromise. The artifacts are NOT malicious but create are made to appear as IOCs for purposes of practicing threat hunting techniques.  Main.ps1 will launch the GUI.  Inject scripts will be called from the GUI as requested.  The GUI is divided into 2 sections: Automation and AdHoc.  The Automation section is made to load/create an XML file that can contain 1 or more inject events.  The AdHoc section is to create a single event and either inject it or add it to the loaded Automation XML file.
