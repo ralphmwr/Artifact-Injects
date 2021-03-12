@@ -81,8 +81,8 @@ try {
     
     try {
         Write-Verbose "Creating scheduled task arguments"
-        #$Principal = $Principal -replace '\','\\' #WQL needs to escape the literal \
-        $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Caption = '$($Principal.Replace('\','\\'))'").SID
+        
+        $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Caption = '$($Principal -replace '\\','\\')'").SID
         if (!$userid) {
             $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$Principal'").SID
         }

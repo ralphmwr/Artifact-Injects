@@ -2,7 +2,12 @@
 param (
     [Parameter(Mandatory=$true, Position = 0)]
     [ValidateScript({
-        if (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$_'" -ErrorAction Ignore) {
+        $Para = @{
+            ClassName = 'Win32_Account'
+            ErrorAction = 'Ignore'
+        }
+        $caption = $_ -replace '\\','\\'
+        if ((Get-CimInstance @Para -Filter "Caption = '$caption'") -or (Get-CimInstance @Para -Filter "Name = '$caption'")) {
             $true
         }
         else {
@@ -39,7 +44,10 @@ try {
       
     try {
         Write-Verbose "Creating scheduled task arguments"
-        $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$Principal'").SID
+        $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Caption = '$($Principal -replace '\\','\\')'").SID
+        if (!$userid) {
+            $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$Principal'").SID
+        }
         if ($userid.SIDType -eq 1) {
             $PrincipalArg = @{LogonType = "Password"}
             $RegisterArg  = @{Password  = $Credential.GetNetworkCredential().Password}
