@@ -172,13 +172,17 @@ $lblAutomationName.UseCompatibleTextRendering = $true
 #
 #dgvAutomation
 #
-$dgvAutomation.AllowDrop = $true
 $dgvAutomation.AllowUserToAddRows = $false
 $dgvAutomation.AllowUserToDeleteRows = $false
 $dgvAutomation.ColumnHeadersHeightSizeMode = [System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode]::AutoSize
 $dgvAutomation.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]6,[System.Int32]107))
 $dgvAutomation.Name = [System.String]'dgvAutomation'
 $dgvAutomation.ReadOnly = $true
+$dgvAutomation.RowHeadersVisible = $false
+$dgvAutomation.RowHeadersWidth = [System.Int32]100
+$dgvAutomation.RowTemplate.Resizable = [System.Windows.Forms.DataGridViewTriState]::True
+$dgvAutomation.SelectionMode = [System.Windows.Forms.DataGridViewSelectionMode]::CellSelect
+$dgvAutomation.ShowEditingIcon = $false
 $dgvAutomation.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]922,[System.Int32]201))
 $dgvAutomation.TabIndex = [System.Int32]2
 $dgvAutomation.Visible = $false

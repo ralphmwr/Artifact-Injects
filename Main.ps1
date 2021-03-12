@@ -15,6 +15,8 @@ $AddAutomation = {
         <parameter name='Principal'>$($cbxAdHoc2.SelectedItem.ToString())</parameter>
         <parameter name='Runlocation'>$($cbxAdHoc1.SelectedItem.ToString())</parameter>
         <parameter name='ProcessName'>$($txtAdHoc1.Text)</parameter>
+        <parameter name='Credential-User'>$($script:credential.username)</parameter>
+        <parameter name='Password-User'>$($script:credential.password | ConvertFrom-SecureString -ErrorAction Ignore)</parameter>
 "@
             } #generic process execution
         } #switch
@@ -40,6 +42,7 @@ $NewAutomation = {
         "<automation></automation>" | Set-Content -Path $Script:Automationfile
         [xml]$script:Automationxml = Get-Content -Path $Script:Automationfile
     } #if
+    $updatedgvAutomation.invoke()
 } #NewAutomation script block
 
 $LoadAutomation = {
@@ -286,20 +289,27 @@ $UpdateAdHocForm = {
 } #UpdateAdHocForm scriptblock
 
 $updatedgvAutomation = {
-    if ($Script:Automationfile){
+    if ($Script:Automationxml){
+        $dgvAutomation.rows.clear()
+        $dgvAutomation.Refresh()
         $dgvAutomation.Visible = $true
         $dgvAutomation.ColumnCount = 4
-        $dgvAutomation.Columns[0].Name = "Targets"
-        $dgvAutomation.Columns[1].Name = "Action"
-        $dgvAutomation.Columns[2].Name = "Parameters"
-        $dgvAutomation.Columns[3].Name = "Status"
+        $dgvAutomation.Columns[0].Name  = "Targets"
+        $dgvAutomation.Columns[0].Width = 200
+        $dgvAutomation.Columns[1].Name  = "Action"
+        $dgvAutomation.Columns[1].Width = 150
+        $dgvAutomation.Columns[2].Name  = "Parameters"
+        $dgvAutomation.Columns[2].Width = 300
+        $dgvAutomation.Columns[3].Name  = "Status"
+        $dgvAutomation.Columns[3].Width = 100    
 
         foreach ($artifact in $Script:Automationxml.automation.artifact) {
             $row = @($artifact.Targets)
             $row += $artifact.Action
-            $row += ($artifact.parameter | 
-                Group-Object -Property name |
-                    Select-Object @{n='param';e={"$($_.name)=$($_.group.'#text' -join ', ')"}}).param -join "; "
+            $row += ($artifact.parameter |
+                Where-Object {$_.name -notin 'Credential-User','Password-User'} |
+                    Group-Object -Property name |
+                        Select-Object @{n='param';e={"$($_.name)=$($_.group.'#text' -join ', ')"}}).param -join "; "
             $row += "Not Validated"
             $dgvAutomation.rows.add($row)
         }
