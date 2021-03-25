@@ -1,5 +1,6 @@
 [CmdletBinding()]
 param (
+    [Parameter(Mandatory=$true, Position=0)]
     [ValidateScript({
         $Para = @{
             ClassName = 'Win32_Account'
@@ -16,7 +17,7 @@ param (
     [string]
     $Principal,
 
-    [Parameter(Mandatory=$true, Position=1)]
+    [Parameter(Mandatory=$true, Position = 1)]
     [ValidateScript({
         if (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$_'" -ErrorAction Ignore) {
             Throw "$_ already exists on $env:COMPUTERNAME"
@@ -33,12 +34,14 @@ param (
 
     [Parameter(Position = 2)]
     [ValidateScript({
-        $ValidGroups = (Get-CimInstance -ClassName win32_group).name
-        foreach ($group in @($_)) {
-            if ($group -notin $ValidGroups) {
-                Throw "$group does not exist on $env:COMPUTERNAME"
-            }
-        }
+        if ($_) {
+            $ValidGroups = (Get-CimInstance -ClassName win32_group).name
+            foreach ($group in @($_)) {
+                if ($group -notin $ValidGroups) {
+                    Throw "$group does not exist on $env:COMPUTERNAME"
+                } #if notin $validGroups
+            } #foreach
+        } #if
         $true
     })]
     [string[]]
@@ -53,13 +56,17 @@ $ErrorActionPreference = "Stop"
 #to add verbose messaging (Invoked remotely), add an application argument with key of verbose and value of $true
 if ($PSSenderInfo.applicationarguments.verbose) {$VerbosePreference = 'Continue'}
 
+$message = @()
 #nested in try, catch, finally main for overall success determination
 try {
     $success = $true
       
     try {
         Write-Verbose "Creating scheduled task arguments"
-        $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$Principal'").SID
+        $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Caption = '$($Principal -replace '\\','\\')'").SID
+        if (!$userid) {
+            $userid = (Get-CimInstance -ClassName Win32_Account -Filter "Name = '$Principal'").SID
+        }
         if ($userid.SIDType -eq 1) {
             $PrincipalArg = @{LogonType = "Password"}
             $RegisterArg  = @{Password  = $Credential.GetNetworkCredential().Password}
@@ -68,21 +75,21 @@ try {
             $PrincipalArg = @{LogonType = "ServiceAccount"}
             $RegisterArg  = @{}
         }
-        $script = {
-            New-LocalUser -Name $AccountName -NoPassword | Out-Null
-            foreach ($group in $GroupMembership) {
-                ([ADSI]("WinNT://$env:COMPUTERNAME/$group,group").add("WinNT://$AccountName,user"))
-            } #foreach            
-        } #script
+
+        $script = "`"New-LocalUser -Name '$AccountName' -NoPassword; "
+        $script += foreach ($group in $GroupMembership) {
+                "([ADSI]('WinNT://$env:COMPUTERNAME/$group,group')).add('WinNT://$AccountName,user'); "
+            }
+        $script += '"'
 
         $taskargs = @{
-            Action    = New-ScheduledTaskAction -Execute "powershell.exe -script $script"
+            Action    = New-ScheduledTaskAction -Execute "powershell" -Argument "-command $script"
             Settings  = New-ScheduledTaskSettingsSet -Hidden
             Principal = New-ScheduledTaskPrincipal -UserId $userid @PrincipalArg
         } #taskargs hashtable
     } #try
     catch {
-        $message = "Unable to create scheduled task arguments on $env:COMPUTERNAME"
+        $message += "Unable to create scheduled task arguments on $env:COMPUTERNAME"
         Throw $_
     } #catch
     
@@ -95,30 +102,55 @@ try {
         Write-Verbose "Creating/Registering/Starting scheduled task $taskname on $env:COMPUTERNAME"
         New-ScheduledTask @taskargs | 
             Register-ScheduledTask -TaskName $taskname @RegisterArg | 
-                Start-ScheduledTask
+                Start-ScheduledTask -Verbose
+        
+        $timeout = 0
+        while ((Get-ScheduledTask -TaskName $taskname).state -eq "Running") {
+            Write-Verbose "Task $taskname is running...."
+            Start-Sleep -Seconds 3
+            $timeout += 1
+            if ($timeout -gt 5) {
+                Throw "Task timed out!"
+            } #if
+        } #while
     } #try
     catch {
-        $message = "Unable to start process from scheduled task - $taskname on $env:COMPUTERNAME"
+        $message += "Unable to create account $AccountName on $env:COMPUTERNAME"
         Throw $_
     } #catch
 
     try {
-        $ProcessName = (Split-Path -Path $Path -Leaf -Resolve) -replace "\.exe"
-        Write-Verbose "Validating $ProcessName is running on $env:COMPUTERNAME"
-        Get-Process -Name $ProcessName | Out-Null
-        $message = "Validated process: $ProcessName on $env:COMPUTERNAME"
-        Write-Verbose $message
+        Write-Verbose "Validating $AccountName is on $env:COMPUTERNAME"
+        Get-LocalUser -Name $AccountName | Out-Null
+        $message += "Validated account: $AccountName on $env:COMPUTERNAME"
     } #try
     catch {
-        $message = "$ProcessName is NOT running on $env:COMPUTERNAME"
+        $message += "$AccountName is NOT on $env:COMPUTERNAME"
         Throw $_
     } #catch
-
+    try {
+        if ($GroupMembership) {
+            foreach ($group in $GroupMembership) {
+                Write-Verbose "Validating $AccountName is in $group"
+                if ($AccountName -notin (Get-CimInstance win32_group -Filter "Name = '$group'" |
+                    Get-CimAssociatedInstance -Association win32_groupuser).Name) {
+                    $message += "$AccountName is NOT in $group"
+                    $success = $false
+                } #if
+                else {
+                    $message += "Validated account: $AccountName in $group"
+                } #esle
+            } #foreach  
+        } #if
+    } #try
+    catch {
+        Throw $_
+    } #catch
 } #Main Try
 
 catch {
     $success = $false
-    $message += "`nError Msg: $($_.Tostring())"
+    $message += " - Error Msg: $($_.Tostring())"
 } #Main catch
 
 finally {
@@ -129,7 +161,9 @@ finally {
     if ($taskname) {
         Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore | 
         Unregister-ScheduledTask -Confirm:$false -ErrorAction Ignore
-    }
+        if ($?) {Write-Verbose "Removed $taskname from scheduled tasks"}
+        else {Write-Verbose "Unable to remove $taskname from scheduled tasks"}
+    } #if
 
     [PSCustomObject]@{
         success = $success

@@ -33,7 +33,7 @@ $AddAutomation = {
 
         <parameter name='Principal'>$($cbxAdHoc1.SelectedItem.ToString())</parameter>
         <parameter name='AccountName'>$($txtAdHoc1.Text)</parameter>
-        <parameter name='GroupMembership'>$($txtAdHoc2.Text.lines -join ',')</parameter>
+        <parameter name='GroupMembership'>$($txtAdHoc2.Text)</parameter>
         <parameter name='Credential-User'>$($script:credential.username)</parameter>
         <parameter name='Password-User'>$($script:credential.password | ConvertFrom-SecureString -ErrorAction Ignore)</parameter>
 "@
@@ -122,15 +122,6 @@ $AdHocRun = {
                     } #if are you sure?
                     else {Break}
                 } #if not SYSTEM as principal
-                
-                try {
-                    Invoke-Command @Parameters |
-                    ForEach-Object {$txtAdHocStatus.Lines += ("{0} - {1}" -f $_.pscomputername, $_.message)}  
-                } #try
-                catch {
-                    $txtAdHocStatus.Lines += "Invoke-Command error : "
-                    Throw $_
-                } #catch
             } #Generic Process Execution
             
             'Start Process' {
@@ -148,18 +139,13 @@ $AdHocRun = {
                     } #if are you sure?
                     else {Break}
                 } #if not SYSTEM as principal
-                
-                try {
-                    Invoke-Command @Parameters |
-                    ForEach-Object {$txtAdHocStatus.Lines += ("{0} - {1}" -f $_.pscomputername, $_.message)}  
-                } #try
-                catch {
-                    $txtAdHocStatus.Lines += "Invoke-Command error : "
-                    Throw $_
-                } #catch
             } #Start Process
+
             'New Local Account' {
-    
+                $Parameters.FilePath = Join-Path -Path $PSScriptRoot -ChildPath 'SRC_Scripts\Invoke-Account.ps1'
+                $Parameters.argumentlist = $cbxAdHoc1.SelectedItem.ToString(),
+                    $txtAdHoc1.Text,
+                    @($txtAdHoc2.Text -split ", *")
             } #New Local Account
             'Startup Folder Persistence' {
     
@@ -180,14 +166,26 @@ $AdHocRun = {
                 [system.Windows.messagebox]::Show('Select an Action!')
             } #default
         } #switch
-    }
+        try {
+            Invoke-Command @Parameters |
+                ForEach-Object {
+                    foreach ($message in @($_.message)) {
+                        $txtAdHocStatus.Lines += ("{0} - {1}" -f $_.pscomputername, $message)
+                    } #inner foreach              
+                } #outer Foreach-Object  
+        } #try
+        catch {
+            $txtAdHocStatus.Lines += "Invoke-Command error : "
+            Throw $_
+        } #catch
+    } #main try
     catch {
         $txtAdHocStatus.Lines += ("Error Msg: {0} : {1}" -f $_.Tostring(), $_.InvocationInfo.Line.trim())
-    }
+    } #main catch
     finally {
         $AdHocSession | Remove-PSSession -ErrorAction Ignore
-    }   
-} #AdHoc Run+Validate
+    }   #finally
+} #AdHoc Run+Validate Script Block
 
 $UpdateAdHocForm = {
     switch ($cbxAction.SelectedItem.ToString()) {

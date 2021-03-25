@@ -37,6 +37,7 @@ $ErrorActionPreference = "Stop"
 
 #to add verbose messaging (Invoked remotely), add an application argument with key of verbose and value of $true
 if ($PSSenderInfo.applicationarguments.verbose) {$VerbosePreference = 'Continue'}
+$message = @()
 
 #nested in try, catch, finally main for overall success determination
 try {
@@ -63,7 +64,7 @@ try {
         } #taskargs hashtable
     } #try
     catch {
-        $message = "Unable to create scheduled task arguments on $env:COMPUTERNAME"
+        $message += "Unable to create scheduled task arguments on $env:COMPUTERNAME"
         Throw $_
     } #catch
     
@@ -79,7 +80,7 @@ try {
                 Start-ScheduledTask
     } #try
     catch {
-        $message = "Unable to start process from scheduled task - $taskname on $env:COMPUTERNAME"
+        $message += "Unable to start process from scheduled task - $taskname on $env:COMPUTERNAME"
         Throw $_
     } #catch
 
@@ -87,11 +88,11 @@ try {
         $ProcessName = (Split-Path -Path $Path -Leaf -Resolve) -replace "\.exe"
         Write-Verbose "Validating $ProcessName is running on $env:COMPUTERNAME"
         Get-Process -Name $ProcessName | Out-Null
-        $message = "Validated process: $ProcessName on $env:COMPUTERNAME"
+        $message += "Validated process: $ProcessName on $env:COMPUTERNAME"
         Write-Verbose $message
     } #try
     catch {
-        $message = "$ProcessName is NOT running on $env:COMPUTERNAME"
+        $message += "$ProcessName is NOT running on $env:COMPUTERNAME"
         Throw $_
     } #catch
 
@@ -99,7 +100,7 @@ try {
 
 catch {
     $success = $false
-    $message += "`nError Msg: $($_.Tostring())"
+    $message += "Error Msg: $($_.Tostring())"
 } #Main catch
 
 finally {
@@ -110,6 +111,8 @@ finally {
     if ($taskname) {
         Get-ScheduledTask -TaskName $taskname -ErrorAction Ignore | 
         Unregister-ScheduledTask -Confirm:$false -ErrorAction Ignore
+        if ($?) {Write-Verbose "Removed $taskname from scheduled tasks"}
+        else {Write-Verbose "Unable to remove $taskname from scheduled tasks"}
     }
 
     [PSCustomObject]@{
