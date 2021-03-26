@@ -19,8 +19,27 @@ $AddAutomation = {
         <parameter name='Password-User'>$($script:credential.password | ConvertFrom-SecureString -ErrorAction Ignore)</parameter>
 "@
             } #generic process execution
+            'Start Process' {  
+                $xml += @"
+
+        <parameter name='Principal'>$($cbxAdHoc1.SelectedItem.ToString())</parameter>
+        <parameter name='Path'>$($txtAdHoc1.Text)</parameter>
+        <parameter name='Credential-User'>$($script:credential.username)</parameter>
+        <parameter name='Password-User'>$($script:credential.password | ConvertFrom-SecureString -ErrorAction Ignore)</parameter>
+"@
+            } #start process
+            'New Local Account' {  
+                $xml += @"
+
+        <parameter name='Principal'>$($cbxAdHoc1.SelectedItem.ToString())</parameter>
+        <parameter name='AccountName'>$($txtAdHoc1.Text)</parameter>
+        <parameter name='GroupMembership'>$($txtAdHoc2.Text.lines -join ',')</parameter>
+        <parameter name='Credential-User'>$($script:credential.username)</parameter>
+        <parameter name='Password-User'>$($script:credential.password | ConvertFrom-SecureString -ErrorAction Ignore)</parameter>
+"@
+            } #New Local Account
         } #switch
-        $xml += '</artifact>'
+        $xml += "\n</artifact>"
         $autonode = $script:Automationxml | 
             Select-Xml -XPath '//automation' | 
                 Select-Object -ExpandProperty node
