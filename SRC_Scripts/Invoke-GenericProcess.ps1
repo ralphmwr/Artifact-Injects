@@ -55,7 +55,7 @@ $ErrorActionPreference = "Stop"
 
 #to add verbose messaging (Invoked remotely), add an application argument with key of verbose and value of $true
 if ($PSSenderInfo.applicationarguments.verbose) {$VerbosePreference = 'Continue'}
-
+$message = @()
 #nested in try, catch, finally main for overall success determination
 try {
     $success = $true
@@ -75,7 +75,7 @@ try {
         } #else   
     } #try
     catch {
-        $message = "Unable to create executable program on $env:COMPUTERNAME. Path: {0}, Destination: {1} " -f $copyargs.Path, $copyargs.Destination
+        $message += "Unable to create executable program on $env:COMPUTERNAME. Path: {0}, Destination: {1} " -f $copyargs.Path, $copyargs.Destination
         Throw $_
     } #catch
     
@@ -101,7 +101,7 @@ try {
         } #taskargs hashtable
     } #try
     catch {
-        $message = "Unable to create scheduled task arguments on $env:COMPUTERNAME "
+        $message += "Unable to create scheduled task arguments on $env:COMPUTERNAME "
         Throw $_
     } #catch
     
@@ -118,7 +118,7 @@ try {
                 
     } #try
     catch {
-        $message = "Unable to start process from scheduled task - $taskname on $env:COMPUTERNAME "
+        $message += "Unable to start process from scheduled task - $taskname on $env:COMPUTERNAME "
         Throw $_
     } #catch
 
@@ -129,7 +129,7 @@ try {
         Write-Verbose $message
     } #try
     catch {
-        $message = "$ProcessName is NOT running on $env:COMPUTERNAME "
+        $message += "$ProcessName is NOT running on $env:COMPUTERNAME "
         Throw $_
     } #catch
 

@@ -257,6 +257,8 @@ $gbxAdHoc.UseCompatibleTextRendering = $true
 #
 #cbVerbose
 #
+$cbVerbose.Checked = $true
+$cbVerbose.CheckState = [System.Windows.Forms.CheckState]::Checked
 $cbVerbose.Location = (New-Object -TypeName System.Drawing.Point -ArgumentList @([System.Int32]730,[System.Int32]94))
 $cbVerbose.Name = [System.String]'cbVerbose'
 $cbVerbose.Size = (New-Object -TypeName System.Drawing.Size -ArgumentList @([System.Int32]166,[System.Int32]24))
