@@ -341,7 +341,7 @@ $DropDown = [PSCustomObject]@{
     Direction   = 'Inbound','Outbound','Both'
     Hive        = 'HKLM','HKU','HKCU'
 } #DropDown definition
-
+#added comment
 Add-Type -AssemblyName System.Windows.Forms
 . (Join-Path $PSScriptRoot 'main.designer.ps1')
 $AdHocControls = @(
